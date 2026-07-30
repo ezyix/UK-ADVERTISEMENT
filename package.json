@@ -1,0 +1,25 @@
+{
+  "name": "uk-advertisement",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npx nodemon server.js",
+    "client": "cd frontend && npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amilnishan/UK-ADVERTISEMENT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Amilnishan/UK-ADVERTISEMENT/issues"
+  },
+  "homepage": "https://github.com/Amilnishan/UK-ADVERTISEMENT#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
