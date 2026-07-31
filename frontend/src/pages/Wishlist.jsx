@@ -1,6 +1,6 @@
 // frontend/src/pages/Wishlist.jsx
 import { useState, useEffect, useContext } from 'react';
-import { Heart, Loader } from 'lucide-react';
+import { Heart, Loader, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
@@ -38,11 +38,16 @@ const Wishlist = () => {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col min-h-screen pb-10">
       
-      <div className="mb-6 md:mb-8 flex items-center gap-3">
-        <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Your Wishlist</h1>
-          <p className="text-gray-500 mt-1">Ads you have saved for later.</p>
+      <div className="mb-6 flex items-center gap-4">
+        <button onClick={() => navigate('/')} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-50 transition">
+          <ArrowLeft className="w-5 h-5 text-gray-800" />
+        </button>
+        <div className="flex items-center gap-3">
+          <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Your Wishlist</h1>
+            <p className="text-gray-500 mt-1">Ads you have saved for later.</p>
+          </div>
         </div>
       </div>
 

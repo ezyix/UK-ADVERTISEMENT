@@ -2,18 +2,18 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Car, Briefcase, Store, Rocket, Laptop, Smartphone, Shirt, Home as HomeIcon, Loader, X } from 'lucide-react';
+import { Search, Car, Briefcase, Store, Rocket, Laptop, Smartphone, Home as HomeIcon, Loader, X, LayoutDashboard, Sofa, Armchair, ShieldCheck } from 'lucide-react';
 import AdCard from '../components/AdCard';
 
 const categories = [
-  { name: 'Cars', icon: Car, color: 'bg-blue-100 text-blue-600' },
+  { name: 'Vehicles', icon: Car, color: 'bg-blue-100 text-blue-600' },
   { name: 'Properties', icon: HomeIcon, color: 'bg-orange-100 text-orange-600' },
   { name: 'Mobiles', icon: Smartphone, color: 'bg-gray-200 text-gray-800' },
   { name: 'Jobs', icon: Briefcase, color: 'bg-purple-100 text-purple-600' },
-  { name: 'Fashion', icon: Shirt, color: 'bg-pink-100 text-pink-600' },
-  { name: 'Electronics', icon: Laptop, color: 'bg-cyan-100 text-cyan-600' },
-  { name: 'Commercial', icon: Store, color: 'bg-green-100 text-green-600' },
-  { name: 'Startups', icon: Rocket, color: 'bg-red-100 text-red-600' },
+  { name: 'Services', icon: Store, color: 'bg-green-100 text-green-600' },
+  { name: 'Electronics & Appliances', icon: Laptop, color: 'bg-cyan-100 text-cyan-600' },
+  { name: 'Furniture', icon: Armchair, color: 'bg-yellow-100 text-yellow-600' },
+  { name: 'Others', icon: Rocket, color: 'bg-red-100 text-red-600' },
 ];
 
 const Home = () => {
@@ -126,10 +126,37 @@ const Home = () => {
 
       <div className="p-4 md:p-8 flex-1">
         
-        <div className="hidden md:block my-8">
-          <h2 className="text-4xl font-extrabold text-gray-800 leading-tight">
-            Find anything in your <span className="text-whatsapp">neighborhood.</span>
-          </h2>
+        {/* HERO BANNER */}
+        <div className="my-6">
+            <div
+              className="relative overflow-hidden rounded-3xl p-6 md:p-10"
+              style={{
+                minHeight: 340,
+                backgroundImage: 'url("/bg.png")',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }}
+            >
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-black/10 rounded-3xl" />
+
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-6 relative z-10">
+              <div className="flex-1 pt-10 md:pt-12">
+                <h1 className="text-3xl md:text-4xl font-extrabold text-black leading-tight">
+                  Find anything in your<br /><span className="text-emerald-500">neighborhood.</span>
+                </h1>
+                <p className="mt-3 text-sm md:text-base">
+                  <span className="text-black">Buy, sell and discover great deals</span><br />
+                  <span className="text-black">around you.</span>
+                </p>
+
+                {/* Right-side illustration is now set as the hero background (CSS) */}
+              </div>
+
+              {/* Right-side illustration is now set as the hero background (CSS) */}
+            </div>
+          </div>
         </div>
 
         {/* Categories Grid */}
@@ -203,6 +230,30 @@ const Home = () => {
         </div>
 
       </div>
+
+  {/* PREMIUM FOOTER */}
+      <footer className="w-full bg-white border-t border-gray-200 mt-auto pt-8 pb-10">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center gap-3">
+          
+          {/* Trust Badge */}
+          <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+            <ShieldCheck className="w-5 h-5 text-whatsapp" />
+            <span className="text-sm font-bold text-gray-700 tracking-wide">
+              Trusted by a Muslim community.
+            </span>
+          </div>
+
+          {/* Copyright / Extra Links */}
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6 text-xs text-gray-400 mt-2 font-medium">
+            <p>© {new Date().getFullYear()} UK Ads. All rights reserved.</p>
+            <div className="hidden md:flex gap-6">
+              <span className="hover:text-whatsapp cursor-pointer transition">Privacy Policy</span>
+              <span className="hover:text-whatsapp cursor-pointer transition">Terms of Service</span>
+            </div>
+          </div>
+          
+        </div>
+      </footer>
     </div>
   );
 };

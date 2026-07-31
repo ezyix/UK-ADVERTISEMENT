@@ -11,7 +11,7 @@ const FloatingPostButton = () => {
         className="bg-white border-[3px] border-whatsapp text-gray-900 px-5 py-3 rounded-full font-extrabold flex items-center gap-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform"
       >
         <Plus strokeWidth={4} className="w-5 h-5 text-whatsapp" />
-        POST AD
+        POST
       </Link>
     </div>
   );

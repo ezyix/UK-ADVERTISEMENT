@@ -1,6 +1,6 @@
 // frontend/src/pages/UserDashboard.jsx
 import { useState, useEffect, useContext } from 'react';
-import { Gift, Copy, Check, Eye, Heart, Edit, Trash2, Tag, Filter, Loader } from 'lucide-react';
+import { Gift, Copy, Check, Eye, Heart, Edit, Trash2, Tag, Filter, Loader, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
@@ -13,6 +13,7 @@ const UserDashboard = () => {
   const [myAds, setMyAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('All');
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -73,14 +74,13 @@ const UserDashboard = () => {
   };
 
   // Handle Mark as Sold
-  const handleMarkAsSold = async (adId) => {
+const handleToggleSold = async (adId) => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.patch(`/api/ads/${adId}/sold`, {}, config);
+      const { data } = await axios.patch(`/api/ads/${adId}/sold`, {}, config);
       
-      // Update the ad's status on the screen instantly
       setMyAds(myAds.map((ad) => 
-        ad._id === adId ? { ...ad, status: 'sold' } : ad
+        ad._id === adId ? { ...ad, status: data.ad.status } : ad
       ));
     } catch (error) {
       alert('Failed to update ad');
@@ -109,13 +109,23 @@ const UserDashboard = () => {
   const referralsNeeded = 5;
   const progressPercent = Math.min((referralsCompleted / referralsNeeded) * 100, 100);
 
+  // Filter logic
+  const filteredAds = filterStatus === 'All' 
+    ? myAds 
+    : myAds.filter(ad => ad.status.toLowerCase() === filterStatus.toLowerCase());
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto flex flex-col min-h-screen">
       
       {/* HEADER */}
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Welcome back, {dashboardData.name.split(' ')[0]}</h1>
-        <p className="text-gray-500 mt-1">Manage your listings and community activity.</p>
+      <div className="mb-6 flex items-center gap-4">
+        <button onClick={() => navigate('/')} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-50 transition">
+          <ArrowLeft className="w-5 h-5 text-gray-800" />
+        </button>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Welcome back, {dashboardData.name.split(" ")[0]}</h1>
+          <p className="text-gray-500 mt-1">Manage your listings and community activity.</p>
+        </div>
       </div>
 
       {/* EARN FREE ADS CARD */}
@@ -185,12 +195,23 @@ const UserDashboard = () => {
 
       {/* MY ADS SECTION */}
       <div>
-        <div className="flex justify-between items-end mb-4">
-          <h2 className="text-xl font-bold text-gray-900">My Ads</h2>
-          <button className="flex items-center gap-1 text-sm font-semibold text-whatsapp hover:underline">
-            <Filter className="w-4 h-4" /> Filter
-          </button>
-        </div>
+        <div className="flex justify-between items-center mb-4">
+  <h2 className="text-xl font-bold text-gray-900">My Ads</h2>
+  
+  {/* Filter Dropdown Container */}
+  <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-white shadow-sm">
+    <Filter className="w-4 h-4 text-whatsapp" />
+    <select 
+      value={filterStatus} 
+      onChange={(e) => setFilterStatus(e.target.value)}
+      className="text-sm font-semibold text-gray-700 outline-none bg-transparent cursor-pointer min-w-[80px]"
+    >
+      <option value="All">All Ads</option>
+      <option value="active">Active</option>
+      <option value="sold">Sold</option>
+    </select>
+  </div>
+</div>
 
         {/* Ad List */}
         {myAds.length === 0 ? (
@@ -202,7 +223,7 @@ const UserDashboard = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {myAds.map((ad) => (
+            {filteredAds.map((ad) => (
               <div key={ad._id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col sm:flex-row">
                 
                 {/* Image */}
@@ -235,13 +256,16 @@ const UserDashboard = () => {
                   <div className="mt-auto flex items-center gap-2 pt-3 border-t border-gray-100">
                     {/* Dynamic Sold/Renew Button */}
     {ad.status === 'sold' ? (
-      <div className="flex-1 bg-gray-50 text-gray-500 font-bold py-2 px-3 rounded-lg text-sm text-center border border-gray-200">
-        Item Sold
-      </div>
+      <button 
+        onClick={() => handleToggleSold(ad._id)}
+        className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold py-2 px-3 rounded-lg text-sm transition"
+      >
+        Mark as Active
+      </button>
     ) : (
       <button 
-        onClick={() => handleMarkAsSold(ad._id)}
-        className="flex-1 bg-gray-100 hover:bg-green-50 hover:text-whatsapp hover:border-whatsapp text-gray-700 font-semibold py-2 px-3 rounded-lg text-sm transition border border-transparent"
+        onClick={() => handleToggleSold(ad._id)}
+        className="flex-1 bg-gray-100 hover:bg-green-50 hover:text-whatsapp font-semibold py-2 px-3 rounded-lg text-sm transition"
       >
         Mark as Sold
       </button>

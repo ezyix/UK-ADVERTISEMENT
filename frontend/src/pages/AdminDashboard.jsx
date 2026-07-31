@@ -10,6 +10,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const [liveAds, setLiveAds] = useState([]);
+  const [totalAdCount, setTotalAdCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Security Check: Kick them out if they aren't an admin
@@ -23,8 +24,13 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const { data } = await axios.get('/api/ads');
-        setLiveAds(data);
+        // We added ?limit=100 so the admin sees a large list, not just 8
+        const { data } = await axios.get('/api/ads?limit=100');
+        
+        // CRASH FIX: Extract .ads from the paginated response!
+        setLiveAds(data.ads || []);
+        setTotalAdCount(data.totalAds || 0);
+
       } catch (error) {
         console.error('Failed to fetch ads', error);
       } finally {
@@ -42,8 +48,9 @@ const AdminDashboard = () => {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       await axios.delete(`/api/ads/${adId}`, config);
       
-      // Remove the ad from the screen immediately without refreshing the page
+      // Remove the ad from the screen immediately
       setLiveAds(liveAds.filter((ad) => ad._id !== adId));
+      setTotalAdCount(prev => prev - 1);
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to delete ad');
     }
@@ -53,10 +60,12 @@ const AdminDashboard = () => {
     return <div className="min-h-screen flex items-center justify-center bg-[#f4f7f6]"><Loader className="w-8 h-8 text-whatsapp animate-spin" /></div>;
   }
 
-  // Calculate dynamic stats
-  const totalAds = liveAds.length;
+  // Calculate dynamic stats safely
   const paidAds = liveAds.filter(ad => ad.tier === 'paid').length;
   const estimatedRevenue = paidAds * 29; // ₹29 per paid ad
+
+  // Calculate how many ads have at least 1 report
+  const reportedAdsCount = liveAds.filter(ad => ad.reports && ad.reports.length > 0).length;
 
   return (
     <div className="min-h-screen bg-[#f4f7f6] font-sans pb-10">
@@ -72,7 +81,7 @@ const AdminDashboard = () => {
             <button className="relative p-2 text-gray-300 hover:text-white transition">
               <Bell className="w-5 h-5" />
             </button>
-            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center border border-gray-600">
+            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center border border-gray-600 uppercase">
               <span className="text-sm font-bold">{user?.name?.charAt(0) || 'A'}</span>
             </div>
             <button onClick={logout} className="hidden sm:flex items-center gap-2 text-sm text-gray-400 hover:text-white transition ml-4">
@@ -91,7 +100,7 @@ const AdminDashboard = () => {
               <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Active Ads</p>
               <div className="p-2 rounded-lg bg-green-100"><BarChart3 className="w-5 h-5 text-green-600" /></div>
             </div>
-            <h2 className="text-3xl font-black text-gray-900 mb-1">{totalAds}</h2>
+            <h2 className="text-3xl font-black text-gray-900 mb-1">{totalAdCount}</h2>
             <p className="text-xs font-semibold text-gray-500">Live on platform</p>
           </div>
 
@@ -101,16 +110,18 @@ const AdminDashboard = () => {
               <div className="p-2 rounded-lg bg-yellow-100"><DollarSign className="w-5 h-5 text-yellow-600" /></div>
             </div>
             <h2 className="text-3xl font-black text-gray-900 mb-1">₹{estimatedRevenue.toLocaleString()}</h2>
-            <p className="text-xs font-semibold text-gray-500">From Featured Ads</p>
+            <p className="text-xs font-semibold text-gray-500">From {paidAds} Featured Ads</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+          <div className={`bg-white rounded-2xl p-6 shadow-sm border flex flex-col relative overflow-hidden ${reportedAdsCount > 0 ? 'border-red-300 shadow-red-100' : 'border-gray-100'}`}>
             <div className="flex justify-between items-start mb-4">
               <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">User Reports</p>
               <div className="p-2 rounded-lg bg-red-100"><AlertCircle className="w-5 h-5 text-red-600" /></div>
             </div>
-            <h2 className="text-3xl font-black text-gray-900 mb-1">0</h2>
-            <p className="text-xs font-semibold text-green-600">All clear!</p>
+            <h2 className="text-3xl font-black text-gray-900 mb-1">{reportedAdsCount}</h2>
+            <p className={`text-xs font-semibold ${reportedAdsCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              {reportedAdsCount > 0 ? 'Action required!' : 'All clear!'}
+            </p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
@@ -133,30 +144,45 @@ const AdminDashboard = () => {
           </div>
 
           <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {liveAds.map((ad) => (
-              <div key={ad._id} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col transition-shadow hover:shadow-md">
-                
-                {/* Ad Info Header */}
-                <div className="flex gap-4 items-start mb-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden p-1">
-                    <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-contain" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 line-clamp-1">{ad.title}</h3>
-                    <p className="text-sm text-gray-500">by {ad.seller?.name || 'Unknown'}</p>
-                    <p className="text-xs font-bold text-whatsapp mt-1">₹{ad.price.toLocaleString()}</p>
-                  </div>
-                </div>
+            {liveAds.map((ad) => {
+              const displayImg = ad.images && ad.images.length > 0 ? ad.images[0] :
+                 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&w=150&q=80';
 
-                {/* Delete Action Button */}
-                <button 
-                  onClick={() => handleDelete(ad._id)}
-                  className="mt-auto w-full flex justify-center items-center gap-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold py-2.5 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" /> Delete Ad
-                </button>
-              </div>
-            ))}
+              const isReported = ad.reports && ad.reports.length > 0; // Check if it has reports
+
+              return (
+                <div key={ad._id} className={`bg-white rounded-xl border p-4 flex flex-col transition-shadow hover:shadow-md ${isReported ? 'border-red-400 bg-red-50/20' : 'border-gray-200'}`}>
+                  
+                  {/* Ad Info Header */}
+                  <div className="flex gap-4 items-start mb-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden p-1">
+                      <img src={displayImg} alt={ad.title} className="w-full h-full object-contain" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 line-clamp-1">{ad.title}</h3>
+                      <p className="text-sm text-gray-500">by {ad.seller?.name || 'Unknown'}</p>
+                      
+                      {/* Show Red Badge if Reported */}
+                      {isReported ? (
+                        <span className="inline-block mt-1 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                          Reported ({ad.reports.length})
+                        </span>
+                      ) : (
+                        <p className="text-xs font-bold text-whatsapp mt-1">₹{ad.price ? ad.price.toLocaleString('en-IN') : '0'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Delete Action Button */}
+                  <button 
+                    onClick={() => handleDelete(ad._id)}
+                    className="mt-auto w-full flex justify-center items-center gap-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold py-2.5 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete Ad
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           {liveAds.length === 0 && (

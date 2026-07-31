@@ -1,7 +1,7 @@
 // frontend/src/components/Navbar.jsx
 import { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Menu, Search, MapPin, X, User, Tag, Gift, Heart, HelpCircle, Plus, LogOut, ChevronDown, Settings } from 'lucide-react';
+import { Menu, Search, MapPin, X, User, Tag, Gift, Heart, HelpCircle, Plus, LogOut, ChevronDown, Settings, Shield } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 
 const Navbar = () => {
@@ -97,9 +97,18 @@ const Navbar = () => {
     </div>
     
     <div className="py-2">
-      <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 text-gray-700">
-        <Settings className="w-5 h-5" /> <span className="font-medium">Profile Settings</span>
-      </Link>
+                      
+                      {/* NEW: Admin Portal Button (ONLY shows if role is 'admin') */}
+                      {user && user.role === 'admin' && (
+                        <Link to="/admin" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-4 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-700 mb-2 border-l-4 border-red-500">
+                          <Shield className="w-5 h-5" /> <span className="font-bold">Admin Portal</span>
+                        </Link>
+                      )}
+
+                      {/* Regular Links */}
+                      <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 text-gray-700">
+                        <Settings className="w-5 h-5" /> <span className="font-medium">Profile Settings</span>
+                      </Link>
       
       <Link to="/wishlist" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 text-gray-700">
         <Heart className="w-5 h-5" /> <span className="font-medium">Wishlist</span>
@@ -122,7 +131,7 @@ const Navbar = () => {
             )}
             
             <Link to="/create" className="bg-white border-[3px] border-whatsapp text-gray-900 px-6 py-2 rounded-full font-bold flex items-center gap-1 hover:shadow-lg transition-all">
-              <Plus strokeWidth={3} className="w-5 h-5 text-whatsapp" /> SELL
+              <Plus strokeWidth={3} className="w-5 h-5 text-whatsapp" /> POST
             </Link>
           </div>
         </div>
@@ -168,8 +177,16 @@ const Navbar = () => {
 
         {/* Sidebar Links */}
         <div className="flex flex-col py-2 flex-1">
+          
+          {/* NEW: Admin Portal Button (Mobile) */}
+          {user && user.role === 'admin' && (
+            <Link to="/admin" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-4 px-6 py-4 bg-red-50 hover:bg-red-100 text-red-700 border-l-4 border-red-500 mb-2">
+              <Shield className="w-6 h-6" /> <span className="font-bold text-lg">Admin Portal</span>
+            </Link>
+          )}
+
           <Link to="/create" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 text-gray-800">
-            <Plus className="w-6 h-6 text-gray-600" /> <span className="font-semibold text-lg">Start selling</span>
+            <Plus className="w-6 h-6 text-gray-600" /> <span className="font-semibold text-lg">Start posting</span>
           </Link>
           <Link to="/dashboard" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 text-gray-800">
             <Tag className="w-6 h-6 text-gray-600" /> <span className="font-semibold text-lg">My Ads</span>

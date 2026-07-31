@@ -104,16 +104,19 @@ const getAds = async (req, res) => {
 // @access  Public
 const getSingleAd = async (req, res) => {
   try {
-    const ad = await Ad.findById(req.params.id).populate('seller', 'name whatsappNumber createdAt');
+    // We use findByIdAndUpdate with $inc to add a view. 
+    // This prevents crashes if old ads have outdated categories!
+    const ad = await Ad.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true } // Return the updated document
+    ).populate('seller', 'name whatsappNumber createdAt');
     
     if (!ad) return res.status(404).json({ message: 'Ad not found' });
-    
-    // Increment view count
-    ad.views += 1;
-    await ad.save();
 
     res.json(ad);
   } catch (error) {
+    console.error("Error fetching single ad:", error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -151,22 +154,45 @@ const deleteAd = async (req, res) => {
 };
 
 // @route   PATCH /api/ads/:id/sold
-// @desc    Mark an ad as sold
+// @desc    Toggle an ad's sold status
 // @access  Private
-const markAsSold = async (req, res) => {
+const toggleSoldStatus = async (req, res) => {
   try {
     const ad = await Ad.findById(req.params.id);
     if (!ad) return res.status(404).json({ message: 'Ad not found' });
 
-    // Ensure the logged-in user owns this ad
     if (ad.seller.toString() !== req.user.id) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    ad.status = 'sold';
+    // Toggle logic
+    ad.status = ad.status === 'sold' ? 'active' : 'sold';
     await ad.save();
     
-    res.json({ message: 'Ad marked as sold', ad });
+    res.json({ message: `Ad marked as ${ad.status}`, ad });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @route   POST /api/ads/:id/report
+// @desc    Report an ad
+// @access  Private
+const reportAd = async (req, res) => {
+  try {
+    const ad = await Ad.findById(req.params.id);
+    if (!ad) return res.status(404).json({ message: 'Ad not found' });
+
+    // Check if the user already reported this ad
+    if (ad.reports.includes(req.user.id)) {
+      return res.status(400).json({ message: 'You have already reported this ad.' });
+    }
+
+    // Add user ID to the reports array
+    ad.reports.push(req.user.id);
+    await ad.save();
+
+    res.json({ message: 'Ad reported successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
@@ -203,4 +229,4 @@ const updateAd = async (req, res) => {
   }
 };
 
-module.exports = { createAd, getAds, getSingleAd, getMyAds, deleteAd, markAsSold, updateAd };
+module.exports = { createAd, getAds, getSingleAd, getMyAds, deleteAd, toggleSoldStatus, updateAd, reportAd };

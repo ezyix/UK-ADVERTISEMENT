@@ -15,6 +15,26 @@ const AdDetails = () => {
 
   const { user } = useContext(AuthContext); 
   const [isSaved, setIsSaved] = useState(false); 
+  const [isReported, setIsReported] = useState(false);
+
+  const handleReportAd = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (window.confirm('Are you sure you want to report this ad to the admins?')) {
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        await axios.post(`/api/ads/${id}/report`, {}, config);
+        
+        // Manually update the ad state so the UI changes instantly without refreshing
+        setAd({ ...ad, reports: [...(ad.reports || []), user._id] });
+        alert('Ad reported successfully. Our team will review it.');
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to report ad');
+      }
+    }
+  };
 
   // Fetch the ad from the backend when the page loads
   useEffect(() => {
@@ -209,8 +229,18 @@ const AdDetails = () => {
               <MessageCircle className="w-6 h-6" /> Chat on WhatsApp
             </button>
             
+            {/* Report Ad */}
             <div className="mt-4 text-center">
-              <button className="text-xs text-red-500 font-semibold hover:underline">⚑ Report this ad</button>
+              {/* Check if user's ID is inside the reports array */}
+              {ad?.reports?.includes(user?._id) ? (
+                <button disabled className="text-xs text-gray-400 font-semibold cursor-not-allowed">
+                  ⚑ You reported this ad
+                </button>
+              ) : (
+                <button onClick={handleReportAd} className="text-xs text-red-500 font-semibold hover:underline">
+                  ⚑ Report this ad
+                </button>
+              )}
             </div>
 
           </div>

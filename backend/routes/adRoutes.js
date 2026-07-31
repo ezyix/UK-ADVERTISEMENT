@@ -1,7 +1,7 @@
 // backend/routes/adRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createAd, getAds, getSingleAd, getMyAds, deleteAd, markAsSold, updateAd } = require('../controllers/adController');
+const { createAd, getAds, getSingleAd, getMyAds, deleteAd, toggleSoldStatus, updateAd, reportAd } = require('../controllers/adController');
 const { protect } = require('../middleware/authMiddleware');
 
 // Public Routes (Anyone can view ads)
@@ -14,5 +14,6 @@ router.get('/user/myads', protect, getMyAds);
 router.post('/', protect, createAd);
 router.put('/:id', protect, updateAd);
 router.delete('/:id', protect, deleteAd);
-router.patch('/:id/sold', protect, markAsSold);
+router.patch('/:id/sold', protect, toggleSoldStatus);
+router.post('/:id/report', protect, reportAd);
 module.exports = router;

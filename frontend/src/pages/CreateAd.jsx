@@ -1,11 +1,11 @@
 // frontend/src/pages/CreateAd.jsx
 import { useState, useEffect, useContext, useRef } from 'react';
-import { CheckCircle2, Copy, Info, ShieldCheck, Camera, X, Loader } from 'lucide-react';
+import { CheckCircle2, Copy, Info, ShieldCheck, Camera, X, Loader, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 
-const categories = ['Vehicles', 'Jobs', 'Shops', 'Startups', 'Tech', 'Items', 'Fashion', 'Hobbies'];
+const categories = ['Vehicles', 'Jobs', 'Services', 'Electronics & Appliances', 'Furniture', 'Properties', 'Mobiles', 'Others'];
 
 const CreateAd = () => {
   const { user } = useContext(AuthContext);
@@ -67,29 +67,43 @@ const CreateAd = () => {
     }
   };
 
-  // Upload to Cloudinary Function
-  const uploadImageToCloudinary = async () => {
-    const data = new FormData();
-    data.append('file', imageFile);
-    
-    // 🔴 UPDATE THIS: Put your Cloudinary Upload Preset Name here
-    data.append('upload_preset', 'localmarket_preset'); 
-    
-    // 🔴 UPDATE THIS: Put your Cloud Name here
-    data.append('cloud_name', 'dj4t5exhg'); 
+// Add this logic to determine what is optional based on the selected category
+  const isPriceOptional = ['Jobs', 'Services', 'Others'].includes(formData.category);
+  const isImageOptional = ['Jobs', 'Services', 'Others'].includes(formData.category);
 
-    // 🔴 UPDATE THIS: Put your Cloud Name in the URL below too!
-    const res = await axios.post(
-      'https://api.cloudinary.com/v1_1/dj4t5exhg/image/upload', 
-      data
-    );
-    
-    return res.data.secure_url; // Returns the permanent Cloudinary URL
+  // Upload to Cloudinary Function (With better error handling)
+  const uploadImageToCloudinary = async () => {
+    try {
+      const data = new FormData();
+      data.append('file', imageFile);
+      data.append('upload_preset', 'localmarket_preset'); // Keep your preset
+      data.append('cloud_name', 'dj4t5exhg'); // Keep your cloud name
+
+      const res = await axios.post(
+        'https://api.cloudinary.com/v1_1/dj4t5exhg/image/upload', 
+        data
+      );
+      return res.data.secure_url;
+    } catch (err) {
+      console.error("Cloudinary Error:", err);
+      throw new Error("Image upload failed. Please check your internet connection or turn off ad-blockers.");
+    }
   };
 
-  const handleSubmit = async (tier) => {
-    if (!formData.title || !formData.category || !formData.price || !formData.description) {
-      setError('Please fill in all required fields.');
+const handleSubmit = async (tier) => {
+    // 1. Check basic required fields
+    if (!formData.title || !formData.category || !formData.description) {
+      setError('Please fill in all required text fields.');
+      return;
+    }
+
+    // 2. Check conditional required fields
+    if (!isPriceOptional && !formData.price) {
+      setError(`Price is required for the ${formData.category} category.`);
+      return;
+    }
+    if (!isImageOptional && !imageFile) {
+      setError(`An image is required for the ${formData.category} category.`);
       return;
     }
 
@@ -97,25 +111,27 @@ const CreateAd = () => {
     setError('');
 
     try {
-      let finalImageUrl = 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&w=600&q=80'; // Fallback
+      let finalImagesArray = [];
       
-      // If user selected an image, upload it first!
+      // If user selected an image, try to upload it
       if (imageFile) {
-        finalImageUrl = await uploadImageToCloudinary();
+        const uploadedUrl = await uploadImageToCloudinary();
+        finalImagesArray.push(uploadedUrl);
       }
 
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const adData = {
         ...formData,
-        price: Number(formData.price),
-        images: [finalImageUrl], 
+        price: formData.price ? Number(formData.price) : 0, // Default to 0 if optional
+        images: finalImagesArray, // Will be empty [] if no image uploaded
         tier
       };
 
       await axios.post('/api/ads', adData, config);
       navigate('/dashboard'); 
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create ad');
+      // This will now catch the Cloudinary network error gracefully!
+      setError(err.message || err.response?.data?.message || 'Failed to create ad');
       setIsSubmitting(false);
     }
   };
@@ -139,9 +155,14 @@ const CreateAd = () => {
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto flex flex-col min-h-screen pb-10">
       
-      <div className="mb-6 md:mb-8 text-center md:text-left">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Create New Listing</h1>
-        <p className="text-gray-500 mt-1">Fill in the details to reach local buyers in your community.</p>
+      <div className="mb-6 flex items-center gap-4">
+        <button onClick={() => navigate('/')} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-50 transition">
+          <ArrowLeft className="w-5 h-5 text-gray-800" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Create New Listing</h1>
+          <p className="text-gray-500 text-sm">Fill in the details to reach local buyers in your community.</p>
+        </div>
       </div>
 
       {error && (
@@ -173,7 +194,10 @@ const CreateAd = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Price (₹) *</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Price (₹) {!isPriceOptional && '*'}
+                  {isPriceOptional && <span className="text-gray-400 font-normal ml-1">(Optional)</span>}
+                </label>
                 <input type="number" name="price" value={formData.price} onChange={handleChange} placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-whatsapp focus:ring-1 focus:ring-whatsapp transition-colors" />
               </div>
             </div>
@@ -186,7 +210,10 @@ const CreateAd = () => {
 
             {/* Product Image Upload */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Product Photo</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+              Product Photo {!isImageOptional && '*'}
+              {isImageOptional && <span className="text-gray-400 font-normal ml-1">(Optional)</span>}
+              </label>
               
               {/* Hidden File Input */}
               <input 

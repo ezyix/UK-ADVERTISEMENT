@@ -1,6 +1,6 @@
 // frontend/src/pages/Profile.jsx
 import { useState, useContext, useEffect } from 'react';
-import { User, Phone, Mail, Loader, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { User, Phone, Mail, Loader, CheckCircle2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
@@ -80,9 +80,14 @@ const Profile = () => {
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto flex flex-col min-h-screen pb-10">
       
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-500 mt-1">Update your personal details and contact information.</p>
+      <div className="mb-6 flex items-center gap-4">
+        <button onClick={() => navigate('/')} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-50 transition">
+          <ArrowLeft className="w-5 h-5 text-gray-800" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+          <p className="text-gray-500 text-sm">Update your personal details and contact information.</p>
+        </div>
       </div>
 
       {message && (
